@@ -3,6 +3,7 @@ import random
 import whois
 import urllib2
 import re
+from bs4 import BeautifulSoup
 
 __author__ = 'kongaloosh'
 
@@ -19,24 +20,36 @@ def domainify():
             domains.append(pickle.load(results))
 
     except EOFError:
-        print(len(domains))
         while True:
             pick = domains[random.randint(0, (len(domains))-1)]
-            for (word,tld) in pick:
-                try:
-                    domain = word[:len(word)-len(tld)] + '.' + tld
-                    if whois.whois(domain)["expiration_date"] == None:
-                        definition =  find(word)
-                        return {'domain':domain, 'definition':definition}
-                except UnboundLocalError:
-                    pass
-                except whois.parser.PywhoisError:           # this isn't 100% accurate
-                        definition =  find(word)
-                        return {'domain':domain, 'definition':definition}
+            print(pick[0])
+            definition =  find(pick[0][0])
+            if definition:
+                for (word,tld) in pick:
+                    try:
+                        domain = word[:len(word)-len(tld)] + '.' + tld
+                        if whois.whois(domain)["expiration_date"]:
+                            return {'domain':domain, 'definition':definition}
+                    except (UnboundLocalError, KeyError):
+                        pass
+                    except whois.parser.PywhoisError:           # this isn't 100% accurate
+                            return {'domain':domain, 'definition':definition}
+                    # except:
+                    #     pass
 
 def find(word):
-    x=urllib2.urlopen("http://dictionary.reference.com/browse/"+word+"?s=t")
+    print(word)
+    try:
+        x=urllib2.urlopen("http://dictionary.reference.com/browse/"+word+"?s=t")
+    except:
+        return None
+
     x=x.read()
+    soup = BeautifulSoup(x, 'html.parser')
+    defs = soup.find_all('div', class_="def-content")
+    defs = [d.text for d in defs]
+    if defs: return defs
+
     items=re.findall('<meta name="description" content="'+".*$",x,re.MULTILINE)
     for x in items:
         y=x.replace('<meta name="description" content="','')
@@ -44,8 +57,11 @@ def find(word):
         m=re.findall('at Dictionary.com, a free online dictionary with pronunciation,              synonyms and translation. Look it up now! "/>',z)
         if m==[]:
             if z.startswith("Get your reference question answered by Ask.com"):
-                print "Word not found! :("
+                return None
             else:
                 return z
     else:
-            print "Word not found! :("
+        return None
+
+if __name__ == "__main__":
+    find('dream')
