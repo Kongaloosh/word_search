@@ -1,5 +1,5 @@
 import pickle
-
+import whois
 __author__ = 'kongaloosh'
 
 f = open('domains')
@@ -943,16 +943,28 @@ ZONE
 ZW
 """
 
+def whois_check(word, tld):
+    try:
+        domain = word[:len(word)-len(tld)] + '.' + tld
+        if whois.whois(domain)["expiration_date"]:
+            return True
+    except (UnboundLocalError, KeyError):
+        pass
+    except whois.parser.PywhoisError:           # this isn't 100% accurate
+            return True
+
 open_domains = open_domains.split('\n')
 open_domains = [i.lower().rstrip() for i in open_domains if i!='']
-print(open_domains)
-f = open('/usr/share/dict/words')
+
+# f = open('/usr/share/dict/words')
+f = open('words.txt')
 results = open('results',"wb")
+
 while True:
     try:
         word = f.readline().lower().rstrip()
         if word != '':
-            matches = [(word, i) for i in open_domains if word.endswith(i) and word != i]
+            matches = [(word, i) for i in open_domains if word.endswith(i) and word != i and whois_check(word,i)]
             if len(matches) > 0:
                 print(matches)
                 pickle.dump(matches, results)
