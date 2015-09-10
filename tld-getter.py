@@ -1,5 +1,6 @@
 import pickle
 import random
+import whois
 
 __author__ = 'kongaloosh'
 
@@ -9,7 +10,16 @@ domains = []
 try:
     while True:
         domains.append(pickle.load(results))
+
 except EOFError:
     print(len(domains))
-    pick = random.randint(0, (len(domains))-1)
-    print(domains[pick])
+    while True:
+        pick = domains[random.randint(0, (len(domains))-1)]
+        for (word,tld) in pick:
+            try:
+                domain = word[:len(word)-len(tld)] + '.' + tld
+                if whois.whois(domain)["expiration_date"] == None:
+                    print(domain)
+                    exit(1)
+            except UnboundLocalError:
+                pass
