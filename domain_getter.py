@@ -33,9 +33,10 @@ def domainify():
                             results.append({'domain':domain, 'definition':definition})
                     except (UnboundLocalError, KeyError):
                         pass
-                    # except whois.parser.PywhoisError:           # this isn't 100% accurate
-                    #     results.append({'domain':domain, 'definition':definition})
-                return results[random.randint(0, (len(results))-1)]
+                    except whois.parser.PywhoisError:           # this isn't 100% accurate
+                        results.append({'domain':domain, 'definition':definition})
+                if len(results)>0:
+                    return results[random.randint(0, (len(results))-1)]
 def find(word):
     print(word)
     try:
